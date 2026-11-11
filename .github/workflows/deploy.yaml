@@ -1,4 +1,4 @@
-name: Deploy Lakhimpur Postal Radar to GitHub Pages
+name: Deploy Lakhimpur Postal Business Reporting
 
 on:
   push:
