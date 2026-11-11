@@ -532,7 +532,7 @@
                     <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-5 rounded-lg shadow flex justify-between items-center">
                       <div>
                         <span className="bg-amber-700 text-amber-100 text-xs px-2 py-0.5 rounded font-bold uppercase">
-                          🥇 Top Sub Office (SO) Today
+                          🥇 Top Office Today
                         </span>
                         <h3 className="text-xl font-bold mt-1">
                           {topSO ? (topSO.office_name || topSO.name) : "No submissions yet"}
@@ -737,6 +737,7 @@
                             }
                             className="border p-2 text-xs rounded bg-white"
                           >
+                            <option value="BO">Head Office (HO)</option>
                             <option value="BO">Branch Office (BO)</option>
                             <option value="SO">Sub Office (SO)</option>
                           </select>
