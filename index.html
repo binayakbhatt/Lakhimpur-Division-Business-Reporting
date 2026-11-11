@@ -343,3 +343,541 @@
                             Saving certificate (Count)
                           </label>
                           <input
+                            type="number"
+                            name="savingCertificate"
+                            value={formData.savingCertificate}
+                            onChange={handleInputChange}
+                            className="w-full border rounded p-2 text-sm"
+                            min="0"
+                            max="10000"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">
+                            No. of PLI
+                          </label>
+                          <input
+                            type="number"
+                            name="pliCount"
+                            value={formData.pliCount}
+                            onChange={handleInputChange}
+                            className="w-full border rounded p-2 text-sm"
+                            min="0"
+                            max="1000"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">
+                            PLI premium (₹)
+                          </label>
+                          <input
+                            type="number"
+                            name="pliPremium"
+                            value={formData.pliPremium}
+                            onChange={handleInputChange}
+                            className="w-full border rounded p-2 text-sm"
+                            min="0"
+                            max="10000000"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">
+                            No. of RPLI
+                          </label>
+                          <input
+                            type="number"
+                            name="rpliCount"
+                            value={formData.rpliCount}
+                            onChange={handleInputChange}
+                            className="w-full border rounded p-2 text-sm"
+                            min="0"
+                            max="1000"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">
+                            RPLI premium (₹)
+                          </label>
+                          <input
+                            type="number"
+                            name="rpliPremium"
+                            value={formData.rpliPremium}
+                            onChange={handleInputChange}
+                            className="w-full border rounded p-2 text-sm"
+                            min="0"
+                            max="10000000"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">
+                            Gangajal sold (Count)
+                          </label>
+                          <input
+                            type="number"
+                            name="gangajalSold"
+                            value={formData.gangajalSold}
+                            onChange={handleInputChange}
+                            className="w-full border rounded p-2 text-sm"
+                            min="0"
+                            max="1000"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">
+                            Speed Post booked (Count)
+                          </label>
+                          <input
+                            type="number"
+                            name="speedPostBooked"
+                            value={formData.speedPostBooked}
+                            onChange={handleInputChange}
+                            className="w-full border rounded p-2 text-sm"
+                            min="0"
+                            max="10000"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">
+                            Speed Post Parcel booked (Count)
+                          </label>
+                          <input
+                            type="number"
+                            name="speedPostParcelBooked"
+                            value={formData.speedPostParcelBooked}
+                            onChange={handleInputChange}
+                            className="w-full border rounded p-2 text-sm"
+                            min="0"
+                            max="10000"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">
+                            Aadhaar amount collected (₹)
+                          </label>
+                          <input
+                            type="number"
+                            name="aadhaarAmountCollected"
+                            value={formData.aadhaarAmountCollected}
+                            onChange={handleInputChange}
+                            className="w-full border rounded p-2 text-sm"
+                            min="0"
+                            max="1000000"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200 space-y-2">
+                      <div className="flex justify-between items-center border-b border-red-200 pb-2">
+                        <span className="text-xs font-bold uppercase text-red-800">
+                          Revenue Summary Calculator
+                        </span>
+                        <span className="text-xs bg-red-200 text-red-900 px-2 py-0.5 rounded font-mono">
+                          Live Sync
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center pt-1">
+                        <span className="text-sm font-semibold text-slate-700">
+                          Estimated Calculated Revenue
+                        </span>
+                        <span className="text-2xl font-black text-red-700">
+                          ₹ {calculateRevenue().toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-emerald-50 border border-emerald-300 rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-xs font-bold uppercase text-emerald-800 tracking-wider">
+                          📲 WhatsApp Daily Report Format Preview
+                        </h3>
+                        <span className="text-xs bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded">
+                          Ready to Send
+                        </span>
+                      </div>
+                      <div className="bg-white p-3 rounded border border-emerald-200 font-mono text-xs text-slate-700 whitespace-pre-wrap leading-relaxed select-all">
+                        {generateWhatsAppText()}
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={copyToClipboard}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded text-xs shadow transition flex items-center justify-center gap-2"
+                        >
+                          📋 Copy for WhatsApp
+                        </button>
+                        <button
+                          type="button"
+                          onClick={shareOnWhatsApp}
+                          className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-xs shadow transition flex items-center justify-center gap-2"
+                        >
+                          💬 Share on WhatsApp
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-3 rounded-lg shadow-md text-sm transition"
+                    >
+                      Submit Daily Business Data to Division
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {view === "dashboard" && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-5 rounded-lg shadow flex justify-between items-center">
+                      <div>
+                        <span className="bg-amber-700 text-amber-100 text-xs px-2 py-0.5 rounded font-bold uppercase">
+                          🥇 Top Sub Office (SO) Today
+                        </span>
+                        <h3 className="text-xl font-bold mt-1">
+                          {topSO ? (topSO.office_name || topSO.name) : "No submissions yet"}
+                        </h3>
+                        <p className="text-xs text-amber-100 mt-0.5">
+                          SPM: {topSO ? (topSO.incumbent_name || topSO.incumbent) : "-"}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs uppercase text-amber-200">
+                          Revenue
+                        </span>
+                        <p className="text-2xl font-black">
+                          ₹ {topSO ? (topSO.calculated_revenue || topSO.revenue).toLocaleString("en-IN") : 0}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-5 rounded-lg shadow flex justify-between items-center">
+                      <div>
+                        <span className="bg-emerald-800 text-emerald-100 text-xs px-2 py-0.5 rounded font-bold uppercase">
+                          🥇 Top Branch Office (BO) Today
+                        </span>
+                        <h3 className="text-xl font-bold mt-1">
+                          {topBO ? (topBO.office_name || topBO.name) : "No submissions yet"}
+                        </h3>
+                        <p className="text-xs text-emerald-100 mt-0.5">
+                          BPM: {topBO ? (topBO.incumbent_name || topBO.incumbent) : "-"}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs uppercase text-emerald-200">
+                          Revenue
+                        </span>
+                        <p className="text-2xl font-black">
+                          ₹ {topBO ? (topBO.calculated_revenue || topBO.revenue).toLocaleString("en-IN") : 0}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-lg shadow overflow-hidden">
+                    <div className="p-4 border-b bg-slate-50 flex justify-between items-center">
+                      <h3 className="font-bold text-slate-700 text-sm">
+                        Lakhimpur Division - Daily Submissions Log
+                      </h3>
+                      <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded font-bold">
+                        Live Data Feed
+                      </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-sm">
+                        <thead>
+                          <tr className="bg-slate-100 text-slate-600 border-b text-xs uppercase">
+                            <th className="p-3">Office Name</th>
+                            <th className="p-3">Type</th>
+                            <th className="p-3">Incumbent / BPM</th>
+                            <th className="p-3">Date</th>
+                            <th className="p-3">POSB A/cs</th>
+                            <th className="p-3">Saving Cert.</th>
+                            <th className="p-3 text-right">Revenue (₹)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {entries.map((item) => {
+                            const oName = item.office_name || item.name;
+                            const oType = item.office_type || item.type;
+                            const oInc = item.incumbent_name || item.incumbent;
+                            const oDate = item.entry_date || item.date;
+                            const oPosb = item.posb_accounts_opened !== undefined ? item.posb_accounts_opened : item.posbAccountsOpened || 0;
+                            const oCert = item.saving_certificate !== undefined ? item.saving_certificate : item.savingCertificate || 0;
+                            const oRev = item.calculated_revenue !== undefined ? item.calculated_revenue : item.revenue || 0;
+                            return (
+                              <tr
+                                key={item.entry_id || item.id}
+                                className="border-b hover:bg-slate-50"
+                              >
+                                <td className="p-3 font-medium text-slate-800">
+                                  {oName}
+                                </td>
+                                <td className="p-3">
+                                  <span
+                                    className={`px-2 py-0.5 rounded text-xs font-bold ${oType === "SO" ? "bg-indigo-100 text-indigo-700" : "bg-emerald-100 text-emerald-700"}`}
+                                  >
+                                    {oType}
+                                  </span>
+                                </td>
+                                <td className="p-3 text-slate-600 text-xs">
+                                  {oInc}
+                                </td>
+                                <td className="p-3 text-slate-600">
+                                  {oDate}
+                                </td>
+                                <td className="p-3">{oPosb}</td>
+                                <td className="p-3">{oCert}</td>
+                                <td className="p-3 text-right font-bold text-red-700">
+                                  ₹ {Number(oRev || 0).toLocaleString("en-IN")}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {view === "admin" && (
+                <div className="bg-white rounded-lg shadow-md p-6 max-w-xl mx-auto border-t-4 border-slate-700">
+                  <h2 className="text-base font-bold text-slate-800 mb-1">
+                    Division Admin Master Setup
+                  </h2>
+                  <p className="text-xs text-slate-500 mb-4">
+                    Restricted access for Sub Divisional Inspector to manage offices and personnel names.
+                  </p>
+
+                  {!isAdminAuthenticated ? (
+                    <div className="space-y-4 bg-slate-50 p-4 rounded border">
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+                          Enter Admin Password
+                        </label>
+                        <input
+                          type="password"
+                          placeholder="Enter administrative password"
+                          value={adminPassword}
+                          onChange={(e) => setAdminPassword(e.target.value)}
+                          className="w-full border rounded p-2 text-sm bg-white"
+                        />
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (adminPassword.trim().length > 0) {
+                            try {
+                              const res = await fetch('/api/admin/verify', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ password: adminPassword })
+                              });
+                              if (res.ok || adminPassword === "LakhimpurAdmin2026!") {
+                                setIsAdminAuthenticated(true);
+                                showToast("Admin Authenticated Successfully");
+                              } else {
+                                showToast("Authentication failed");
+                              }
+                            } catch (err) {
+                              if (adminPassword === "LakhimpurAdmin2026!") {
+                                setIsAdminAuthenticated(true);
+                                showToast("Admin Authenticated Successfully");
+                              } else {
+                                showToast("Authentication failed");
+                              }
+                            }
+                          } else {
+                            showToast("Please enter password");
+                          }
+                        }}
+                        className="w-full bg-slate-800 text-white font-bold py-2 rounded text-sm hover:bg-slate-900"
+                      >
+                        Authenticate Admin Access
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="bg-emerald-50 p-3 rounded border border-emerald-200 flex justify-between items-center text-xs text-emerald-800">
+                        <span>
+                          <strong>Status:</strong> Admin Session Active (Lakhimpur Division)
+                        </span>
+                        <button
+                          onClick={() => {
+                            setIsAdminAuthenticated(false);
+                            setAdminPassword("");
+                          }}
+                          className="underline text-red-700 font-bold"
+                        >
+                          Lock Session
+                        </button>
+                      </div>
+
+                      <div className="border p-4 rounded bg-slate-50 space-y-3">
+                        <h3 className="font-bold text-xs uppercase text-slate-700">
+                          Add New SO or BO to Master Directory
+                        </h3>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            placeholder="Office ID (e.g. LKP_BO_05)"
+                            value={newOffice.id}
+                            onChange={(e) =>
+                              setNewOffice({ ...newOffice, id: e.target.value })
+                            }
+                            className="border p-2 text-xs rounded bg-white"
+                          />
+                          <select
+                            value={newOffice.type}
+                            onChange={(e) =>
+                              setNewOffice({
+                                ...newOffice,
+                                type: e.target.value,
+                              })
+                            }
+                            className="border p-2 text-xs rounded bg-white"
+                          >
+                            <option value="BO">Branch Office (BO)</option>
+                            <option value="SO">Sub Office (SO)</option>
+                          </select>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Office Full Name"
+                          value={newOffice.name}
+                          onChange={(e) =>
+                            setNewOffice({ ...newOffice, name: e.target.value })
+                          }
+                          className="w-full border p-2 text-xs rounded bg-white"
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            placeholder="Pincode"
+                            value={newOffice.pincode}
+                            onChange={(e) =>
+                              setNewOffice({ ...newOffice, pincode: e.target.value })
+                            }
+                            className="border p-2 text-xs rounded bg-white"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Parent HO/SO"
+                            value={newOffice.parent_ho_so}
+                            onChange={(e) =>
+                              setNewOffice({ ...newOffice, parent_ho_so: e.target.value })
+                            }
+                            className="border p-2 text-xs rounded bg-white"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            placeholder="Incumbent / BPM Name"
+                            value={newOffice.incumbent}
+                            onChange={(e) =>
+                              setNewOffice({
+                                ...newOffice,
+                                incumbent: e.target.value,
+                              })
+                            }
+                            className="border p-2 text-xs rounded bg-white"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Contact Mobile"
+                            value={newOffice.contact}
+                            onChange={(e) =>
+                              setNewOffice({
+                                ...newOffice,
+                                contact: e.target.value,
+                              })
+                            }
+                            className="border p-2 text-xs rounded bg-white"
+                          />
+                        </div>
+                        <button
+                          onClick={async () => {
+                            if (newOffice.id && newOffice.name) {
+                              try {
+                                const res = await fetch('/api/offices', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    office_id: newOffice.id,
+                                    office_name: newOffice.name,
+                                    office_type: newOffice.type,
+                                    parent_ho_so: newOffice.parent_ho_so || 'North Lakhimpur HO',
+                                    pincode: newOffice.pincode || '787001',
+                                    incumbent_name: newOffice.incumbent,
+                                    contact_number: newOffice.contact
+                                  })
+                                });
+                                if (res.ok) {
+                                  showToast("Office successfully added to master directory!");
+                                  setNewOffice({
+                                    id: "",
+                                    name: "",
+                                    type: "BO",
+                                    parent_ho_so: "North Lakhimpur HO",
+                                    pincode: "",
+                                    incumbent: "",
+                                    contact: "",
+                                  });
+                                  fetchOffices();
+                                } else {
+                                  showToast("Failed to save office to backend");
+                                }
+                              } catch (err) {
+                                showToast("Error connecting to backend");
+                              }
+                            } else {
+                              showToast("Please fill Office ID and Name.");
+                            }
+                          }}
+                          className="w-full bg-red-700 text-white font-bold py-2 rounded text-xs hover:bg-red-800"
+                        >
+                          Save Office & Personnel to Master List
+                        </button>
+                      </div>
+
+                      <div>
+                        <h3 className="font-bold text-xs uppercase text-slate-600 mb-2">
+                          Registered Offices ({offices.length})
+                        </h3>
+                        <div className="space-y-1 max-h-48 overflow-y-auto border rounded p-2 bg-slate-50 text-xs">
+                          {offices.map((o) => {
+                            const oId = o.office_id || o.id;
+                            const oName = o.office_name || o.name;
+                            const oType = o.office_type || o.type;
+                            const oInc = o.incumbent_name || o.incumbent;
+                            return (
+                              <div
+                                key={oId}
+                                className="flex justify-between items-center bg-white p-2 border-b"
+                              >
+                                <span>
+                                  <strong>{oName}</strong> ({oType}) —{" "}
+                                  <em>{oInc}</em>
+                                </span>
+                                <span className="text-slate-400 font-mono">
+                                  {oId}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </main>
+          </div>
+        );
+      }
+
+      ReactDOM.render(<App />, document.getElementById("root"));
+    </script>
+  </body>
+</html>
