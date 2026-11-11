@@ -1,4 +1,4 @@
-name: Deploy Lakhimpur Postal Business Reporting
+name: Deploy Lakhimpur Postal Business reporting
 
 on:
   push:
@@ -15,7 +15,6 @@ concurrency:
 
 jobs:
   deploy:
-  环境:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -30,7 +29,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './public' # Points to your public folder containing index.html
+          path: './public'
 
       - name: Deploy to GitHub Pages
         id: deployment
