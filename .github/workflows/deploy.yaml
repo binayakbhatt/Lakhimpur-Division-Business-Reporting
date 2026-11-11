@@ -1,4 +1,4 @@
-name: Deploy Lakhimpur Postal Business reporting
+name: Deploy Lakhimpur Postal Radar to GitHub Pages
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '.'   # Points directly to the root directory where index.html resides
 
       - name: Deploy to GitHub Pages
         id: deployment
