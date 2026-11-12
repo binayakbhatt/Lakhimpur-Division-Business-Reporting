@@ -13,8 +13,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-      // Automatically replaced by GitHub Actions during deployment
-     const API_BASE_URL = "__API_URL__".replace(/\/+$/, "");
+      const API_BASE_URL = "__API_URL__".replace(/\/+$/, "");
 
       function App() {
         const [view, setView] = React.useState("entry");
@@ -41,6 +40,7 @@
 
         const [adminPassword, setAdminPassword] = React.useState("");
         const [isAdminAuthenticated, setIsAdminAuthenticated] = React.useState(false);
+        const [isUploading, setIsUploading] = React.useState(false);
         const [newOffice, setNewOffice] = React.useState({
           id: "",
           name: "",
@@ -55,7 +55,7 @@
 
         const showToast = (msg) => {
           setToastMessage(msg);
-          setTimeout(() => setToastMessage(""), 3000);
+          setTimeout(() => setToastMessage(""), 3500);
         };
 
         React.useEffect(() => {
@@ -88,6 +88,118 @@
             }
           } catch (e) {
             console.error("Failed to load entries from backend", e);
+          }
+        };
+
+        // Simple CSV Parser supporting quoted fields
+        const parseCSV = (csvText) => {
+          const lines = csvText
+            .split(/\r?\n/)
+            .map((l) => l.trim())
+            .filter((l) => l.length > 0);
+          if (lines.length < 2) return [];
+
+          const splitLine = (line) => {
+            const result = [];
+            let cur = "";
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+              const ch = line[i];
+              if (ch === '"') {
+                inQuotes = !inQuotes;
+              } else if (ch === "," && !inQuotes) {
+                result.push(cur.trim());
+                cur = "";
+              } else {
+                cur += ch;
+              }
+            }
+            result.push(cur.trim());
+            return result;
+          };
+
+          const headers = splitLine(lines[0]).map((h) =>
+            h.toLowerCase().replace(/\s+/g, "_")
+          );
+
+          return lines.slice(1).map((line) => {
+            const values = splitLine(line);
+            const obj = {};
+            headers.forEach((h, idx) => {
+              obj[h] = values[idx] !== undefined ? values[idx] : "";
+            });
+            return obj;
+          });
+        };
+
+        // Download sample CSV helper
+        const downloadSampleCSV = (type) => {
+          let csvContent = "";
+          let filename = "";
+          if (type === "offices") {
+            csvContent =
+              "office_id,office_name,office_type,parent_ho_so,pincode,incumbent_name,contact_number\n" +
+              "LKP_SO_01,Bihpuria S.O.,SO,North Lakhimpur HO,784161,Smti Ananya Hazarika,9864022222\n" +
+              "LKP_BO_01,Gereki B.O.,BO,Bihpuria S.O.,784161,Shri Ramesh Gogoi,9864033333";
+            filename = "sample_offices_template.csv";
+          } else {
+            csvContent =
+              "office_id,entry_date,posb_accounts_opened,saving_certificate,pli_count,pli_premium,rpli_count,rpli_premium,gangajal_sold,speed_post_booked,speed_post_parcel_booked,aadhaar_amount_collected\n" +
+              `LKP_HO_01,${entryDate},5,2,1,15000,2,8000,3,1200,500,2500`;
+            filename = "sample_daily_entries_template.csv";
+          }
+
+          const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", filename);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        };
+
+        // Handle CSV File Upload for Offices or Entries
+        const handleCSVUpload = async (e, endpointType) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          setIsUploading(true);
+          try {
+            const text = await file.text();
+            const rows = parseCSV(text);
+            if (rows.length === 0) {
+              showToast("CSV file is empty or missing data rows.");
+              setIsUploading(false);
+              return;
+            }
+
+            const endpoint =
+              endpointType === "offices"
+                ? `${API_BASE_URL}/api/offices`
+                : `${API_BASE_URL}/api/entries`;
+
+            const res = await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(rows),
+            });
+
+            const result = await res.json();
+            if (res.ok) {
+              showToast(
+                `Successfully imported ${result.count || rows.length} ${endpointType} records from CSV!`
+              );
+              if (endpointType === "offices") fetchOffices();
+              else fetchEntries();
+            } else {
+              showToast(`CSV Import Error: ${result.error || "Failed to import"}`);
+            }
+          } catch (err) {
+            showToast("Failed to read or upload CSV file.");
+          } finally {
+            setIsUploading(false);
+            e.target.value = "";
           }
         };
 
@@ -185,8 +297,8 @@
             `• No. of RPLI: ${formData.rpliCount}\n` +
             `• RPLI premium: ₹${formData.rpliPremium.toLocaleString("en-IN")}\n` +
             `• Gangajal sold: ${formData.gangajalSold}\n` +
-            `• Speed Post booked: ${formData.speedPostBooked}\n` +
-            `• Speed Post Parcel booked: ${formData.speedPostParcelBooked}\n` +
+            `• Speed Post booked: ₹${formData.speedPostBooked.toLocaleString("en-IN")}\n` +
+            `• Speed Post Parcel booked: ₹${formData.speedPostParcelBooked.toLocaleString("en-IN")}\n` +
             `• Aadhaar amount collected: ₹${formData.aadhaarAmountCollected.toLocaleString("en-IN")}\n\n` +
             `💰 *Estimated Calculated Revenue:* *₹ ${totalRev.toLocaleString("en-IN")}*`
           );
@@ -532,13 +644,13 @@
                     <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-5 rounded-lg shadow flex justify-between items-center">
                       <div>
                         <span className="bg-amber-700 text-amber-100 text-xs px-2 py-0.5 rounded font-bold uppercase">
-                          🥇 Top Sub Office (SO) Today
+                          🥇 Top Sub/Head Office Today
                         </span>
                         <h3 className="text-xl font-bold mt-1">
                           {topSO ? (topSO.office_name || topSO.name) : "No submissions yet"}
                         </h3>
                         <p className="text-xs text-amber-100 mt-0.5">
-                          SPM: {topSO ? (topSO.incumbent_name || topSO.incumbent) : "-"}
+                          Incumbent: {topSO ? (topSO.incumbent_name || topSO.incumbent) : "-"}
                         </p>
                       </div>
                       <div className="text-right">
@@ -642,12 +754,12 @@
               )}
 
               {view === "admin" && (
-                <div className="bg-white rounded-lg shadow-md p-6 max-w-xl mx-auto border-t-4 border-slate-700">
+                <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto border-t-4 border-slate-700">
                   <h2 className="text-base font-bold text-slate-800 mb-1">
                     Division Admin Master Setup
                   </h2>
                   <p className="text-xs text-slate-500 mb-4">
-                    Restricted access for Sub Divisional Inspector to manage offices and personnel names.
+                    Restricted access for Sub Divisional Inspector to manage offices and bulk CSV uploads.
                   </p>
 
                   {!isAdminAuthenticated ? (
@@ -692,7 +804,7 @@
                       </button>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <div className="bg-emerald-50 p-3 rounded border border-emerald-200 flex justify-between items-center text-xs text-emerald-800">
                         <span>
                           <strong>Status:</strong> Admin Session Active (Lakhimpur Division)
@@ -703,14 +815,69 @@
                             setAdminPassword("");
                           }}
                           className="underline text-red-700 font-bold"
+                          title="Log out of Admin Panel"
                         >
-                          Lock Session
+                          Logout / Lock Session
                         </button>
                       </div>
 
+                      {/* CSV BULK UPLOAD SECTION */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="border border-blue-200 bg-blue-50 p-4 rounded space-y-2.5">
+                          <div className="flex justify-between items-center">
+                            <h3 className="font-bold text-xs uppercase text-blue-900">
+                              📂 Bulk Upload Offices (CSV)
+                            </h3>
+                            <button
+                              type="button"
+                              onClick={() => downloadSampleCSV("offices")}
+                              className="text-xs text-blue-700 underline font-semibold"
+                            >
+                              Download Template
+                            </button>
+                          </div>
+                          <p className="text-xs text-blue-800">
+                            Upload a CSV with columns: <code>office_id, office_name, office_type, parent_ho_so, pincode, incumbent_name, contact_number</code>
+                          </p>
+                          <input
+                            type="file"
+                            accept=".csv"
+                            disabled={isUploading}
+                            onChange={(e) => handleCSVUpload(e, "offices")}
+                            className="block w-full text-xs text-slate-700 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-700 file:text-white hover:file:bg-blue-800 cursor-pointer bg-white p-1 rounded border"
+                          />
+                        </div>
+
+                        <div className="border border-emerald-200 bg-emerald-50 p-4 rounded space-y-2.5">
+                          <div className="flex justify-between items-center">
+                            <h3 className="font-bold text-xs uppercase text-emerald-900">
+                              📊 Bulk Upload Daily Data (CSV)
+                            </h3>
+                            <button
+                              type="button"
+                              onClick={() => downloadSampleCSV("entries")}
+                              className="text-xs text-emerald-700 underline font-semibold"
+                            >
+                              Download Template
+                            </button>
+                          </div>
+                          <p className="text-xs text-emerald-800">
+                            Upload multiple daily business rows via CSV. Revenue is auto-calculated for every row.
+                          </p>
+                          <input
+                            type="file"
+                            accept=".csv"
+                            disabled={isUploading}
+                            onChange={(e) => handleCSVUpload(e, "entries")}
+                            className="block w-full text-xs text-slate-700 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 cursor-pointer bg-white p-1 rounded border"
+                          />
+                        </div>
+                      </div>
+
+                      {/* SINGLE OFFICE MANUAL ENTRY */}
                       <div className="border p-4 rounded bg-slate-50 space-y-3">
                         <h3 className="font-bold text-xs uppercase text-slate-700">
-                          Add New HO, SO, or BO to Master Directory
+                          Add Single HO, SO, or BO to Master Directory
                         </h3>
                         <div className="grid grid-cols-2 gap-2">
                           <input
