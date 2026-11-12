@@ -25,6 +25,9 @@
           new Date().toISOString().split("T")[0],
         );
 
+        // Dashboard filter state ('all' or 'date')
+        const [dashboardFilterMode, setDashboardFilterMode] = React.useState("all");
+
         const [formData, setFormData] = React.useState({
           posbAccountsOpened: 0,
           pliCount: 0,
@@ -157,6 +160,78 @@
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
+        };
+
+        // Export Dashboard Submissions to Excel-compatible CSV
+        const exportEntriesToCSV = (rowsToExport) => {
+          if (!rowsToExport || rowsToExport.length === 0) {
+            showToast("No entries available to export.");
+            return;
+          }
+
+          const headers = [
+            "Entry ID",
+            "Entry Date",
+            "Office ID",
+            "Office Name",
+            "Office Type",
+            "Incumbent / BPM",
+            "POSB Accounts Opened",
+            "Saving Certificates",
+            "PLI Policies Count",
+            "PLI Premium (INR)",
+            "RPLI Policies Count",
+            "RPLI Premium (INR)",
+            "Gangajal Sold",
+            "Speed Post Booked (INR)",
+            "Speed Post Parcel Booked (INR)",
+            "Aadhaar Amount Collected (INR)",
+            "Calculated Revenue (INR)",
+            "Submission Timestamp"
+          ];
+
+          const escapeCSVCell = (val) => {
+            const str = String(val !== undefined && val !== null ? val : "");
+            if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+              return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+          };
+
+          const csvRows = rowsToExport.map((item) => [
+            item.entry_id || item.id || "",
+            item.entry_date || item.date || "",
+            item.office_id || "",
+            item.office_name || item.name || "",
+            item.office_type || item.type || "",
+            item.incumbent_name || item.incumbent || "",
+            item.posb_accounts_opened ?? item.posbAccountsOpened ?? 0,
+            item.saving_certificate ?? item.savingCertificate ?? 0,
+            item.pli_count ?? item.pliCount ?? 0,
+            item.pli_premium ?? item.pliPremium ?? 0,
+            item.rpli_count ?? item.rpliCount ?? 0,
+            item.rpli_premium ?? item.rpliPremium ?? 0,
+            item.gangajal_sold ?? item.gangajalSold ?? 0,
+            item.speed_post_booked ?? item.speedPostBooked ?? 0,
+            item.speed_post_parcel_booked ?? item.speedPostParcelBooked ?? 0,
+            item.aadhaar_amount_collected ?? item.aadhaarAmountCollected ?? 0,
+            item.calculated_revenue ?? item.revenue ?? 0,
+            item.timestamp || ""
+          ].map(escapeCSVCell).join(","));
+
+          // Prepend UTF-8 BOM (\uFEFF) so Microsoft Excel opens it with proper formatting
+          const csvString = "\uFEFF" + [headers.join(","), ...csvRows].join("\n");
+          const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          const suffix = dashboardFilterMode === "date" ? entryDate : "all_dates";
+          link.href = url;
+          link.setAttribute("download", `Lakhimpur_Division_Report_${suffix}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          showToast(`📥 Exported ${rowsToExport.length} records to CSV!`);
         };
 
         // Handle CSV File Upload for Offices or Entries
@@ -315,6 +390,8 @@
         };
 
         const todayEntries = entries.filter((e) => (e.entry_date || e.date) === entryDate);
+        const displayedEntries = dashboardFilterMode === "date" ? todayEntries : entries;
+
         const topSO = todayEntries
           .filter((e) => ["SO", "HO"].includes(e.office_type || e.type))
           .sort((a, b) => (b.calculated_revenue || b.revenue) - (a.calculated_revenue || a.revenue))[0];
@@ -644,7 +721,7 @@
                     <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-5 rounded-lg shadow flex justify-between items-center">
                       <div>
                         <span className="bg-amber-700 text-amber-100 text-xs px-2 py-0.5 rounded font-bold uppercase">
-                          🥇 Top Sub/Head Office Today
+                          🥇 Top Sub/Head Office ({entryDate})
                         </span>
                         <h3 className="text-xl font-bold mt-1">
                           {topSO ? (topSO.office_name || topSO.name) : "No submissions yet"}
@@ -666,7 +743,7 @@
                     <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-5 rounded-lg shadow flex justify-between items-center">
                       <div>
                         <span className="bg-emerald-800 text-emerald-100 text-xs px-2 py-0.5 rounded font-bold uppercase">
-                          🥇 Top Branch Office (BO) Today
+                          🥇 Top Branch Office (BO) ({entryDate})
                         </span>
                         <h3 className="text-xl font-bold mt-1">
                           {topBO ? (topBO.office_name || topBO.name) : "No submissions yet"}
@@ -687,13 +764,47 @@
                   </div>
 
                   <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <div className="p-4 border-b bg-slate-50 flex justify-between items-center">
-                      <h3 className="font-bold text-slate-700 text-sm">
-                        Lakhimpur Division - Daily Submissions Log
-                      </h3>
-                      <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded font-bold">
-                        Live Data Feed
-                      </span>
+                    <div className="p-4 border-b bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div>
+                        <h3 className="font-bold text-slate-700 text-sm">
+                          Lakhimpur Division - Daily Submissions Log ({displayedEntries.length})
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Filter by date or export the complete table directly to Excel / CSV
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          type="date"
+                          value={entryDate}
+                          onChange={(e) => {
+                            setEntryDate(e.target.value);
+                            setDashboardFilterMode("date");
+                          }}
+                          className="border rounded px-2 py-1 text-xs bg-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setDashboardFilterMode(
+                              dashboardFilterMode === "all" ? "date" : "all"
+                            )
+                          }
+                          className="px-2.5 py-1.5 rounded text-xs font-semibold border bg-white hover:bg-slate-100 text-slate-700"
+                        >
+                          {dashboardFilterMode === "all"
+                            ? `Filter: ${entryDate} Only`
+                            : "Show All Dates"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => exportEntriesToCSV(displayedEntries)}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded text-xs shadow flex items-center gap-1.5 transition"
+                        >
+                          📥 Export to Excel / CSV
+                        </button>
+                      </div>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse text-sm">
@@ -709,7 +820,7 @@
                           </tr>
                         </thead>
                         <tbody>
-                          {entries.map((item) => {
+                          {displayedEntries.map((item) => {
                             const oName = item.office_name || item.name;
                             const oType = item.office_type || item.type;
                             const oInc = item.incumbent_name || item.incumbent;
