@@ -14,7 +14,7 @@
 
     <script type="text/babel">
       // Automatically replaced by GitHub Actions during deployment
-      const API_BASE_URL = "__API_URL__";
+     const API_BASE_URL = "__API_URL__".replace(/\/+$/, "");
 
       function App() {
         const [view, setView] = React.useState("entry");
