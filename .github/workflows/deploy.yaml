@@ -23,13 +23,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Inject Worker URL Secret into Root index.html
+        run: |
+          sed -i 's|__API_URL__|${{ secrets.WORKER_URL }}|g' index.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'   # Points directly to the root directory where index.html resides
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
