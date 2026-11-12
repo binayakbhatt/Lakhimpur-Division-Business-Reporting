@@ -13,8 +13,9 @@
     <div id="root"></div>
 
     <script type="text/babel">
-      // This placeholder will be automatically replaced during GitHub deployment
-const API_BASE_URL = "__API_URL__";
+      // Automatically replaced by GitHub Actions during deployment
+      const API_BASE_URL = "__API_URL__";
+
       function App() {
         const [view, setView] = React.useState("entry");
 
@@ -64,7 +65,7 @@ const API_BASE_URL = "__API_URL__";
 
         const fetchOffices = async () => {
           try {
-            const res = await fetch('/api/offices');
+            const res = await fetch(`${API_BASE_URL}/api/offices`);
             if (res.ok) {
               const data = await res.json();
               setOffices(data);
@@ -80,7 +81,7 @@ const API_BASE_URL = "__API_URL__";
 
         const fetchEntries = async () => {
           try {
-            const res = await fetch('/api/entries');
+            const res = await fetch(`${API_BASE_URL}/api/entries`);
             if (res.ok) {
               const data = await res.json();
               setEntries(data);
@@ -102,7 +103,6 @@ const API_BASE_URL = "__API_URL__";
         const incumbentName = currentOffice.incumbent_name || currentOffice.incumbent || "";
         const contactNum = currentOffice.contact_number || currentOffice.contact || "";
 
-        // Updated Revenue Calculation Engine based on user rules
         const calculateRevenue = () => {
           const posbRev = Math.max(0, Number(formData.posbAccountsOpened) || 0) * 219.23;
           const savingCertRev = Math.max(0, Number(formData.savingCertificate) || 0) * 73.25;
@@ -110,7 +110,6 @@ const API_BASE_URL = "__API_URL__";
           const rpliRev = Math.max(0, Number(formData.rpliPremium) || 0) * 0.12;
           const gangajalRev = Math.max(0, Number(formData.gangajalSold) || 0) * 30;
           
-          // Remaining all: Amount - 18% (i.e., Amount * 0.82)
           const speedPostRev = Math.max(0, Number(formData.speedPostBooked) || 0) * 0.82;
           const parcelRev = Math.max(0, Number(formData.speedPostParcelBooked) || 0) * 0.82;
           const aadhaarRev = Math.max(0, Number(formData.aadhaarAmountCollected) || 0) * 0.82;
@@ -152,7 +151,7 @@ const API_BASE_URL = "__API_URL__";
           };
 
           try {
-            const res = await fetch('/api/entries', {
+            const res = await fetch(`${API_BASE_URL}/api/entries`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
@@ -169,7 +168,6 @@ const API_BASE_URL = "__API_URL__";
           }
         };
 
-        // WhatsApp Format Generator
         const generateWhatsAppText = () => {
           const totalRev = calculateRevenue();
           const officeNameStr = currentOffice.office_name || currentOffice.name || "";
@@ -206,7 +204,7 @@ const API_BASE_URL = "__API_URL__";
 
         const todayEntries = entries.filter((e) => (e.entry_date || e.date) === entryDate);
         const topSO = todayEntries
-          .filter((e) => (e.office_type || e.type) === "SO")
+          .filter((e) => ["SO", "HO"].includes(e.office_type || e.type))
           .sort((a, b) => (b.calculated_revenue || b.revenue) - (a.calculated_revenue || a.revenue))[0];
         const topBO = todayEntries
           .filter((e) => (e.office_type || e.type) === "BO")
@@ -426,7 +424,7 @@ const API_BASE_URL = "__API_URL__";
                         </div>
                         <div>
                           <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">
-                           Speed Post booking amount (₹)
+                            Speed Post booked (₹)
                           </label>
                           <input
                             type="number"
@@ -435,12 +433,12 @@ const API_BASE_URL = "__API_URL__";
                             onChange={handleInputChange}
                             className="w-full border rounded p-2 text-sm"
                             min="0"
-                            max="10000"
+                            max="1000000"
                           />
                         </div>
                         <div>
                           <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">
-                            Speed Post Parcel booking amount (₹)
+                            Speed Post Parcel booked (₹)
                           </label>
                           <input
                             type="number"
@@ -449,10 +447,10 @@ const API_BASE_URL = "__API_URL__";
                             onChange={handleInputChange}
                             className="w-full border rounded p-2 text-sm"
                             min="0"
-                            max="10000"
+                            max="1000000"
                           />
                         </div>
-                        <div className="md:col-span-2">
+                        <div>
                           <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">
                             Aadhaar amount collected (₹)
                           </label>
@@ -534,7 +532,7 @@ const API_BASE_URL = "__API_URL__";
                     <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-5 rounded-lg shadow flex justify-between items-center">
                       <div>
                         <span className="bg-amber-700 text-amber-100 text-xs px-2 py-0.5 rounded font-bold uppercase">
-                          🥇 Top Office Today
+                          🥇 Top Sub Office (SO) Today
                         </span>
                         <h3 className="text-xl font-bold mt-1">
                           {topSO ? (topSO.office_name || topSO.name) : "No submissions yet"}
@@ -617,7 +615,7 @@ const API_BASE_URL = "__API_URL__";
                                 </td>
                                 <td className="p-3">
                                   <span
-                                    className={`px-2 py-0.5 rounded text-xs font-bold ${oType === "SO" ? "bg-indigo-100 text-indigo-700" : "bg-emerald-100 text-emerald-700"}`}
+                                    className={`px-2 py-0.5 rounded text-xs font-bold ${oType === "BO" ? "bg-emerald-100 text-emerald-700" : "bg-indigo-100 text-indigo-700"}`}
                                   >
                                     {oType}
                                   </span>
@@ -670,24 +668,19 @@ const API_BASE_URL = "__API_URL__";
                         onClick={async () => {
                           if (adminPassword.trim().length > 0) {
                             try {
-                              const res = await fetch('/api/admin/verify', {
+                              const res = await fetch(`${API_BASE_URL}/api/admin/verify`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ password: adminPassword })
                               });
-                              if (res.ok || adminPassword === "LakhimpurAdmin2026!") {
+                              if (res.ok) {
                                 setIsAdminAuthenticated(true);
                                 showToast("Admin Authenticated Successfully");
                               } else {
-                                showToast("Authentication failed");
+                                showToast("Invalid admin password");
                               }
                             } catch (err) {
-                              if (adminPassword === "LakhimpurAdmin2026!") {
-                                setIsAdminAuthenticated(true);
-                                showToast("Admin Authenticated Successfully");
-                              } else {
-                                showToast("Authentication failed");
-                              }
+                              showToast("Cannot reach Cloudflare Worker API");
                             }
                           } else {
                             showToast("Please enter password");
@@ -717,7 +710,7 @@ const API_BASE_URL = "__API_URL__";
 
                       <div className="border p-4 rounded bg-slate-50 space-y-3">
                         <h3 className="font-bold text-xs uppercase text-slate-700">
-                          Add New SO or BO to Master Directory
+                          Add New HO, SO, or BO to Master Directory
                         </h3>
                         <div className="grid grid-cols-2 gap-2">
                           <input
@@ -739,9 +732,9 @@ const API_BASE_URL = "__API_URL__";
                             }
                             className="border p-2 text-xs rounded bg-white"
                           >
-                            <option value="BO">Head Office (HO)</option>
                             <option value="BO">Branch Office (BO)</option>
                             <option value="SO">Sub Office (SO)</option>
+                            <option value="HO">Head Office (HO)</option>
                           </select>
                         </div>
                         <input
@@ -803,7 +796,7 @@ const API_BASE_URL = "__API_URL__";
                           onClick={async () => {
                             if (newOffice.id && newOffice.name) {
                               try {
-                                const res = await fetch('/api/offices', {
+                                const res = await fetch(`${API_BASE_URL}/api/offices`, {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({
