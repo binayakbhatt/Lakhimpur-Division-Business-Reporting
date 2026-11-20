@@ -60,6 +60,7 @@
         });
 
         const [toastMessage, setToastMessage] = React.useState("");
+        const [savedNotification, setSavedNotification] = React.useState("");
 
         const showToast = (msg) => {
           setToastMessage(msg);
@@ -135,6 +136,30 @@
             }
           } catch (err) {
             showToast("Network error while deleting office");
+          }
+        };
+
+        const handleDeleteEntry = async (entry) => {
+          const eId = entry.entry_id || entry.id;
+          const oName = entry.office_name || entry.name || "this office";
+          const oDate = entry.entry_date || entry.date || "";
+          if (!window.confirm(`Delete daily entry for "${oName}" (${oDate})?`)) {
+            return;
+          }
+
+          try {
+            const res = await fetch(
+              `${API_BASE_URL}/api/entries?entry_id=${encodeURIComponent(eId)}`,
+              { method: "DELETE" }
+            );
+            if (res.ok) {
+              showToast(`Deleted entry for ${oName} (${oDate})`);
+              fetchEntries();
+            } else {
+              showToast("Failed to delete entry.");
+            }
+          } catch (err) {
+            showToast("Network error while deleting entry.");
           }
         };
 
@@ -383,7 +408,11 @@
               body: JSON.stringify(payload)
             });
             if (res.ok) {
-              showToast(`Daily Report Submitted Successfully! Calculated Revenue: ₹${totalRev.toLocaleString("en-IN")}`);
+              const officeLabel = currentOffice.office_name || currentOffice.name || selectedOfficeId;
+              setSavedNotification(
+                `Data has been saved successfully for ${officeLabel} (${entryDate}). Calculated Revenue: ₹${totalRev.toLocaleString("en-IN")}`
+              );
+              setTimeout(() => setSavedNotification(""), 7000);
               fetchEntries();
               setView("dashboard");
             } else {
@@ -431,12 +460,23 @@
         const todayEntries = entries.filter((e) => (e.entry_date || e.date) === entryDate);
         const displayedEntries = dashboardFilterMode === "date" ? todayEntries : entries;
 
-        const topSO = todayEntries
-          .filter((e) => ["SO", "HO"].includes(e.office_type || e.type))
-          .sort((a, b) => Number(b.calculated_revenue ?? b.revenue ?? 0) - Number(a.calculated_revenue ?? a.revenue ?? 0))[0];
-        const topBO = todayEntries
-          .filter((e) => (e.office_type || e.type) === "BO")
-          .sort((a, b) => Number(b.calculated_revenue ?? b.revenue ?? 0) - Number(a.calculated_revenue ?? a.revenue ?? 0))[0];
+        const getTopEntries = (list) => {
+          if (!list || list.length === 0) return { winners: [], maxRev: 0 };
+          const maxRev = Math.max(
+            ...list.map((e) => Number(e.calculated_revenue ?? e.revenue ?? 0))
+          );
+          const winners = list.filter(
+            (e) => Number(e.calculated_revenue ?? e.revenue ?? 0) === maxRev
+          );
+          return { winners, maxRev };
+        };
+
+        const topSO = getTopEntries(
+          todayEntries.filter((e) => ["SO", "HO"].includes(e.office_type || e.type))
+        );
+        const topBO = getTopEntries(
+          todayEntries.filter((e) => (e.office_type || e.type) === "BO")
+        );
 
         return (
           <div className="min-h-screen flex flex-col bg-slate-100">
@@ -480,6 +520,21 @@
             </header>
 
             <main className="flex-1 max-w-5xl w-full mx-auto p-4 md:p-6">
+              {savedNotification && (
+                <div className="mb-4 bg-emerald-50 border-l-4 border-emerald-600 text-emerald-900 p-4 rounded-lg shadow flex justify-between items-center gap-3">
+                  <div className="text-sm font-semibold">
+                    ✅ {savedNotification}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSavedNotification("")}
+                    className="text-emerald-700 hover:text-emerald-900 font-bold text-xs px-2 py-1 rounded bg-emerald-100 shrink-0"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+
               {view === "entry" && (
                 <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto border-t-4 border-red-700 space-y-6">
                   <div className="pb-3 border-b flex justify-between items-center">
@@ -757,46 +812,74 @@
               {view === "dashboard" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-5 rounded-lg shadow flex justify-between items-center">
+                    {/* Top SO/HO Card (Supports Joint 1st Ties) */}
+                    <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-5 rounded-lg shadow flex justify-between items-center gap-4">
                       <div>
                         <span className="bg-amber-700 text-amber-100 text-xs px-2 py-0.5 rounded font-bold uppercase">
-                          🥇 Top Sub/Head Office ({entryDate})
+                          🥇 {topSO.winners.length > 1 ? `Joint 1st Sub/Head Office (${topSO.winners.length} Tied)` : "Top Sub/Head Office"} ({entryDate})
                         </span>
-                        <h3 className="text-xl font-bold mt-1">
-                          {topSO ? (topSO.office_name || topSO.name) : "No submissions yet"}
-                        </h3>
-                        <p className="text-xs text-amber-100 mt-0.5">
-                          Incumbent: {topSO ? (topSO.incumbent_name || topSO.incumbent) : "-"}
-                        </p>
+                        {topSO.winners.length > 0 ? (
+                          <div className="mt-1.5 space-y-1">
+                            {topSO.winners.map((w, idx) => (
+                              <div key={w.entry_id || w.id || idx}>
+                                <h3 className="text-lg font-bold leading-tight">
+                                  {w.office_name || w.name}
+                                </h3>
+                                <p className="text-xs text-amber-100">
+                                  Incumbent: {w.incumbent_name || w.incumbent || "-"}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <>
+                            <h3 className="text-xl font-bold mt-1">No submissions yet</h3>
+                            <p className="text-xs text-amber-100 mt-0.5">Incumbent: -</p>
+                          </>
+                        )}
                       </div>
-                      <div className="text-right">
+                      <div className="text-right shrink-0">
                         <span className="text-xs uppercase text-amber-200">
                           Revenue
                         </span>
                         <p className="text-2xl font-black">
-                          ₹ {topSO ? Number(topSO.calculated_revenue ?? topSO.revenue ?? 0).toLocaleString("en-IN") : 0}
+                          ₹ {topSO.maxRev.toLocaleString("en-IN")}
                         </p>
                       </div>
                     </div>
 
-                    <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-5 rounded-lg shadow flex justify-between items-center">
+                    {/* Top BO Card (Supports Joint 1st Ties) */}
+                    <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-5 rounded-lg shadow flex justify-between items-center gap-4">
                       <div>
                         <span className="bg-emerald-800 text-emerald-100 text-xs px-2 py-0.5 rounded font-bold uppercase">
-                          🥇 Top Branch Office (BO) ({entryDate})
+                          🥇 {topBO.winners.length > 1 ? `Joint 1st Branch Office (${topBO.winners.length} Tied)` : "Top Branch Office (BO)"} ({entryDate})
                         </span>
-                        <h3 className="text-xl font-bold mt-1">
-                          {topBO ? (topBO.office_name || topBO.name) : "No submissions yet"}
-                        </h3>
-                        <p className="text-xs text-emerald-100 mt-0.5">
-                          BPM: {topBO ? (topBO.incumbent_name || topBO.incumbent) : "-"}
-                        </p>
+                        {topBO.winners.length > 0 ? (
+                          <div className="mt-1.5 space-y-1">
+                            {topBO.winners.map((w, idx) => (
+                              <div key={w.entry_id || w.id || idx}>
+                                <h3 className="text-lg font-bold leading-tight">
+                                  {w.office_name || w.name}
+                                </h3>
+                                <p className="text-xs text-emerald-100">
+                                  BPM: {w.incumbent_name || w.incumbent || "-"}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <>
+                            <h3 className="text-xl font-bold mt-1">No submissions yet</h3>
+                            <p className="text-xs text-emerald-100 mt-0.5">BPM: -</p>
+                          </>
+                        )}
                       </div>
-                      <div className="text-right">
+                      <div className="text-right shrink-0">
                         <span className="text-xs uppercase text-emerald-200">
                           Revenue
                         </span>
                         <p className="text-2xl font-black">
-                          ₹ {topBO ? Number(topBO.calculated_revenue ?? topBO.revenue ?? 0).toLocaleString("en-IN") : 0}
+                          ₹ {topBO.maxRev.toLocaleString("en-IN")}
                         </p>
                       </div>
                     </div>
@@ -856,6 +939,9 @@
                             <th className="p-3">POSB A/cs</th>
                             <th className="p-3">Saving Cert.</th>
                             <th className="p-3 text-right">Revenue (₹)</th>
+                            {isAdminAuthenticated && (
+                              <th className="p-3 text-center">Action</th>
+                            )}
                           </tr>
                         </thead>
                         <tbody>
@@ -893,6 +979,17 @@
                                 <td className="p-3 text-right font-bold text-red-700">
                                   ₹ {Number(oRev || 0).toLocaleString("en-IN")}
                                 </td>
+                                {isAdminAuthenticated && (
+                                  <td className="p-3 text-center">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteEntry(item)}
+                                      className="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 font-semibold rounded text-xs transition"
+                                    >
+                                      Delete
+                                    </button>
+                                  </td>
+                                )}
                               </tr>
                             );
                           })}
